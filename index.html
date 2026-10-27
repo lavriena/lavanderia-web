@@ -1,0 +1,300 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lavanderia coletiva – agendamento e painel</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f1ea;--sf:#fffdf8;--tx:#1d2a2e;--mu:#5d6b6f;--ac:#0b6e6e;--ln:#d8d2c4;--wa:#b4531a;--hi:11,110,110;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a1c;--sf:#1a2528;--tx:#e9efef;--mu:#9fb0b3;--ac:#4fc1c1;--ln:#2b3b3f;--wa:#f0955a;--hi:79,193,193}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+header{padding:20px 16px 8px;max-width:980px;margin:auto}
+h1{font:600 26px/1.15 "IBM Plex Mono",ui-monospace,monospace;margin:0 0 4px;letter-spacing:-.5px}
+h2{font:600 17px "IBM Plex Mono",ui-monospace,monospace;margin:0 0 10px}
+.sub{color:var(--mu);margin:0 0 14px}
+main{max-width:980px;margin:auto;padding:0 16px 40px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}
+input,select,button{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:6px;padding:8px 10px}
+button{cursor:pointer}button:hover{border-color:var(--ac)}
+button.p{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}
+:focus-visible{outline:3px solid var(--wa);outline-offset:2px}
+[role=tablist]{display:flex;gap:4px;border-bottom:2px solid var(--ln);margin-bottom:16px}
+[role=tab]{border:0;border-radius:6px 6px 0 0;background:none;padding:10px 16px;font-weight:600;color:var(--mu)}
+[role=tab][aria-selected=true]{background:var(--sf);color:var(--ac);box-shadow:inset 0 -3px 0 var(--ac)}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:16px;margin-bottom:16px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px;text-align:center;font-size:13px}
+th{color:var(--mu);font-weight:600}
+.slot{width:100%;min-height:36px;font-size:12px}
+.free{border-style:dashed}
+.busy{background:rgba(var(--hi),.14);border-color:var(--ac)}
+.mine{background:var(--ac);color:var(--bg);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:12px}
+.stat b{display:block;font:600 24px "IBM Plex Mono",ui-monospace,monospace;color:var(--ac)}
+.hm td{font:11px "IBM Plex Mono",ui-monospace,monospace;min-width:34px;height:30px;border:1px solid var(--bg)}
+.hm th{font:11px "IBM Plex Mono",ui-monospace,monospace;padding:2px}
+.rowb{display:grid;grid-template-columns:110px 1fr 48px;gap:8px;align-items:center;margin:6px 0;font-size:13px}
+.track{background:var(--bg);border-radius:4px;height:14px}.fill{background:var(--ac);height:100%;border-radius:4px}
+.msg{min-height:22px;color:var(--wa);font-weight:600}
+ol.pk{margin:0;padding-left:22px}
+.note{color:var(--mu);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Lavanderia coletiva</h1>
+  <p class="sub">Agendamento de 2 lavadoras e 2 secadoras para 42 apartamentos, com painel de uso e previsão de horários de pico. Versão de demonstração: os dados de sensores são simulados.</p>
+</header>
+<main>
+  <div role="tablist" aria-label="Seções">
+    <button role="tab" id="t1" aria-selected="true" aria-controls="p1">Agendar</button>
+    <button role="tab" id="t2" aria-selected="false" aria-controls="p2" tabindex="-1">Painel</button>
+  </div>
+
+  <section id="p1" role="tabpanel" aria-labelledby="t1">
+    <div class="card">
+      <h2>Entrar</h2>
+      <div class="bar">
+        <label for="apt">Apartamento (1 a 42)</label>
+        <input id="apt" type="text" inputmode="numeric" autocomplete="username" style="width:90px">
+        <label for="pw">Senha</label>
+        <input id="pw" type="password" autocomplete="current-password" style="width:150px">
+        <button class="p" id="login">Entrar</button>
+        <button id="sair" hidden>Sair</button>
+        <span id="who" class="mono"></span>
+      </div>
+      <div class="bar" id="troca" hidden>
+        <label for="npw">Defina sua nova senha (mín. 6 caracteres)</label>
+        <input id="npw" type="password" autocomplete="new-password" style="width:170px">
+        <button class="p" id="salvasenha">Salvar senha</button>
+      </div>
+      <p class="note" id="modo"></p>
+    </div>
+    <div class="card">
+      <h2>Reservas do dia</h2>
+      <div class="bar"><label for="dia">Data</label><input id="dia" type="date"></div>
+      <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      <div class="scroll"><table id="agenda"></table></div>
+      <p class="note">Blocos de 1 hora, das 8h às 21h. Toque em um horário livre para reservar; toque na sua reserva para cancelar.</p>
+    </div>
+  </section>
+
+  <section id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <div class="bar"><button class="p" id="regen">Gerar e salvar dados simulados</button><span class="note" id="semente"></span></div>
+    <div class="grid" id="stats"></div>
+    <div class="card"><h2>Ocupação por hora e dia da semana</h2>
+      <div class="scroll"><table class="hm" id="hm"></table></div>
+      <p class="note">Percentual médio do tempo em que as máquinas estiveram ligadas. O valor aparece escrito em cada célula; a cor é só reforço.</p></div>
+    <div class="card"><h2>Ocupação média por máquina</h2><div id="maq"></div></div>
+    <div class="card"><h2>Cinco próximos horários de maior movimento previstos</h2><ol class="pk" id="picos"></ol>
+      <p class="note" id="modelo"></p></div>
+    <div class="card"><h2>Desempenho dos modelos (teste: últimos 20% dos dias)</h2>
+      <table id="met"></table>
+      <p class="note">Como os dados são simulados e o gerador usa o mesmo padrão que o modelo aprende, estes números validam o fluxo de trabalho, não o desempenho em condições reais.</p></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const MAQ=['lavadora-1','lavadora-2','secadora-1','secadora-2'];
+const DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let reservas=store.get('lav_res',{}), apt=store.get('lav_apt',null);
+
+/* ---------- abas ---------- */
+const tabs=[$('t1'),$('t2')];
+function show(i){tabs.forEach((t,j)=>{t.setAttribute('aria-selected',i===j);t.tabIndex=i===j?0:-1;$('p'+(j+1)).hidden=i!==j});if(i===1&&!D)gerar()}
+tabs.forEach((t,i)=>{t.onclick=()=>show(i);t.onkeydown=e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const j=1-i;show(j);tabs[j].focus()}}});
+
+/* ---------- configuração do Supabase ---------- */
+const CFG={url:'https://gwibdzaeiuvlxnnrbutl.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3aWJkemFlaXV2bHhubnJidXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNTk3MDIsImV4cCI6MjEwODYzNTcwMn0.tw-a_BzGxKq_212I1Hnx2jr4fsoQ1qrVCE2AuJgP6UE',dominio:'lavanderia.app'};
+const ONLINE=!CFG.url.startsWith('COLE');
+const sb=ONLINE?window.supabase.createClient(CFG.url,CFG.key):null;
+const emailDe=n=>(n==='admin'?'admin':'apto'+n)+'@'+CFG.dominio;
+$('modo').textContent=ONLINE?'Conectado ao banco de dados (Supabase). As reservas são salvas e compartilhadas entre os moradores.':'Modo demonstração: sem banco, as reservas ficam só neste navegador. Para ligar ao Supabase, preencha a URL e a chave no início do script.';
+
+/* ---------- agendamento ---------- */
+const hoje=new Date();
+$('dia').value=new Date(hoje.getTime()-hoje.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+function say(t){$('msg').textContent=t}
+function entrou(n){apt=n;$('who').textContent=n==='admin'?'Administrador':'Apartamento '+n;$('sair').hidden=!ONLINE;say('');carregar()}
+async function login(){
+  const v=$('apt').value.trim().toLowerCase(),n=v==='admin'?'admin':parseInt(v,10);
+  if(n!=='admin'&&!(n>=1&&n<=42)){say('Informe um apartamento de 1 a 42.');return}
+  if(!ONLINE){apt=n;store.set('lav_apt',n);entrou(n);return}
+  const{data,error}=await sb.auth.signInWithPassword({email:emailDe(n),password:$('pw').value});
+  if(error){say('Apartamento ou senha incorretos.');return}
+  $('pw').value='';entrou(n);
+  if(data.user.user_metadata&&data.user.user_metadata.trocar_senha)$('troca').hidden=false}
+$('login').onclick=login;
+$('salvasenha').onclick=async()=>{const p=$('npw').value;if(p.length<6){say('A senha precisa ter pelo menos 6 caracteres.');return}
+  const{error}=await sb.auth.updateUser({password:p,data:{trocar_senha:false}});
+  if(error){say('Não foi possível trocar a senha: '+error.message);return}
+  $('npw').value='';$('troca').hidden=true;say('Senha alterada com sucesso.')};
+$('sair').onclick=async()=>{await sb.auth.signOut();apt=null;reservas={};$('who').textContent='';$('sair').hidden=true;draw()};
+async function carregar(){
+  if(!ONLINE){draw();return}
+  if(!apt){reservas={};draw();return}
+  const dia=$('dia').value,{data,error}=await sb.from('reservas').select('maquina,hora,apartamento').eq('dia',dia);
+  if(error){say('Erro ao ler reservas: '+error.message);return}
+  reservas={};data.forEach(r=>reservas[dia+'|'+r.maquina+'|'+r.hora]=r.apartamento);draw()}
+function draw(){
+  const dia=$('dia').value;let h='<tr><th>Hora</th>'+MAQ.map(m=>'<th>'+m+'</th>').join('')+'</tr>';
+  for(let hr=8;hr<=21;hr++){h+='<tr><th>'+String(hr).padStart(2,'0')+'h</th>';
+    MAQ.forEach(m=>{const k=dia+'|'+m+'|'+hr,o=reservas[k];
+      const cls=o?(o===apt?'busy mine':'busy'):'free';
+      const lab=o?(o===apt?'Sua reserva':'Apto '+o):'Livre';
+      h+='<td><button class="slot '+cls+'" data-k="'+k+'" aria-label="'+m+' às '+hr+'h, '+lab+'">'+lab+'</button></td>'});
+    h+='</tr>'}
+  $('agenda').innerHTML=h}
+$('agenda').onclick=async e=>{const b=e.target.closest('button.slot');if(!b)return;
+  if(!apt){say('Entre com o apartamento antes de reservar.');return}
+  if(apt==='admin'){say('O administrador não faz reservas.');return}
+  const k=b.dataset.k,[dia,maquina,hora]=k.split('|'),o=reservas[k];
+  if(o&&o!==apt){say('Só o apartamento que reservou pode cancelar.');return}
+  if(ONLINE){
+    if(!o){const{error}=await sb.from('reservas').insert({dia,maquina,hora:+hora,apartamento:apt});
+      if(error){say(error.code==='23505'?'Esse horário acabou de ser reservado por outro morador.':'Erro ao reservar: '+error.message);await carregar();return}say('Reserva salva.')}
+    else{const{error}=await sb.from('reservas').delete().match({dia,maquina,hora:+hora,apartamento:apt});
+      if(error){say('Erro ao cancelar: '+error.message);return}say('Reserva cancelada.')}
+    await carregar()}
+  else{ if(!o){reservas[k]=apt;say('Reserva feita.')}else{delete reservas[k];say('Reserva cancelada.')}
+    store.set('lav_res',reservas);draw()}
+  const nb=document.querySelector('[data-k="'+k+'"]');if(nb)nb.focus()};
+$('dia').onchange=carregar;
+(async()=>{ if(ONLINE){reservas={};const{data}=await sb.auth.getSession();
+    if(data.session){const m=data.session.user.email.split('@')[0];entrou(m==='admin'?'admin':parseInt(m.replace('apto',''),10))}else draw()}
+  else{ if(apt){$('apt').value=apt;entrou(apt)}else draw()}})();
+
+/* ---------- simulador IoT ---------- */
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const WH=[0,0,0,0,0,0,0,.4,1,1.2,1,.8,.8,.8,.7,.7,.8,1.2,2,2.4,2.2,1.4,.5,.1]; // mais uso à noite
+function simular(seed,dias=120){
+  const R=rng(seed),ciclos=[];let invalidos=0;
+  const fim=new Date();fim.setHours(0,0,0,0);const ini=new Date(fim.getTime()-dias*864e5);
+  for(let d=0;d<dias;d++){
+    const dt=new Date(ini.getTime()+d*864e5),dow=dt.getDay(),fds=dow===0||dow===6;
+    const n=Math.round((fds?32:20)+R()*6-3);const soma=WH.reduce((a,b)=>a+b,0);
+    const ocupado={};MAQ.forEach(m=>ocupado[m]=[]);
+    for(let i=0;i<n;i++){
+      let x=R()*soma,h=0;while(x>WH[h]){x-=WH[h];h++}
+      const sec=R()<.4,dur=sec?40+R()*20:50+R()*20,ini_=h*60+R()*60;
+      const lista=sec?[MAQ[2],MAQ[3]]:[MAQ[0],MAQ[1]];
+      const m=lista[Math.floor(R()*2)];
+      if(ocupado[m].some(([a,b])=>ini_<b&&ini_+dur>a))continue;
+      ocupado[m].push([ini_,ini_+dur]);
+      let corrente=+(sec?9+R()*2:5+R()*2).toFixed(2);
+      if(R()<.01)corrente=-1;
+      if(corrente<=0){invalidos++;continue}   // limpeza: corrente positiva
+      ciclos.push({m,d,dow,ini:ini_,fim:ini_+dur,dur:Math.round(dur),corrente})}}
+  return{ciclos,invalidos,dias}}
+
+/* ---------- ocupação horária ---------- */
+function ocupacaoHoraria(S){
+  const occ=new Float64Array(S.dias*24);
+  S.ciclos.forEach(c=>{const a=c.d*1440+c.ini,b=c.d*1440+c.fim;
+    for(let t=Math.floor(a/60);t*60<b&&t<occ.length;t++){occ[t]+=Math.min(b,(t+1)*60)-Math.max(a,t*60)}});
+  const dow0=new Date(new Date().setHours(0,0,0,0)-S.dias*864e5).getDay();
+  return Array.from(occ,(v,t)=>({d:Math.floor(t/24),h:t%24,dow:(dow0+Math.floor(t/24))%7,y:Math.min(1,v/(60*MAQ.length))}))}
+
+/* ---------- modelos ---------- */
+const feat=r=>{const a=2*Math.PI*r.h/24,v=[1,Math.sin(a),Math.cos(a)];for(let k=1;k<7;k++)v.push(r.dow===k?1:0);return v};
+function ridge(X,y,l=1e-3){const p=X[0].length,A=Array.from({length:p},()=>new Array(p+1).fill(0));
+  X.forEach((x,i)=>{for(let a=0;a<p;a++){for(let b=0;b<p;b++)A[a][b]+=x[a]*x[b];A[a][p]+=x[a]*y[i]}});
+  for(let a=0;a<p;a++)A[a][a]+=l;
+  for(let c=0;c<p;c++){let m=c;for(let r=c+1;r<p;r++)if(Math.abs(A[r][c])>Math.abs(A[m][c]))m=r;[A[c],A[m]]=[A[m],A[c]];
+    for(let r=0;r<p;r++)if(r!==c){const f=A[r][c]/A[c][c];for(let k=c;k<=p;k++)A[r][k]-=f*A[c][k]}}
+  const w=A.map((row,i)=>row[p]/row[i]);return r=>feat(r).reduce((s,v,i)=>s+v*w[i],0)}
+function arvore(rows,prof,R){
+  const mean=a=>a.reduce((s,r)=>s+r.y,0)/a.length;
+  if(prof===0||rows.length<8)return{v:mean(rows)};
+  let best=null;
+  for(const f of['h','dow']){const vals=[...new Set(rows.map(r=>r[f]))].sort((a,b)=>a-b);
+    for(let i=0;i<vals.length-1;i++){const t=(vals[i]+vals[i+1])/2,L=rows.filter(r=>r[f]<=t),Rr=rows.filter(r=>r[f]>t);
+      if(L.length<4||Rr.length<4)continue;
+      const sse=a=>{const m=mean(a);return a.reduce((s,r)=>s+(r.y-m)**2,0)};const s=sse(L)+sse(Rr);
+      if(!best||s<best.s)best={s,f,t,L,Rr}}}
+  if(!best)return{v:mean(rows)};
+  return{f:best.f,t:best.t,l:arvore(best.L,prof-1,R),r:arvore(best.Rr,prof-1,R)}}
+const prever=(n,r)=>n.v!==undefined?n.v:prever(r[n.f]<=n.t?n.l:n.r,r);
+function floresta(rows,R,n=40){const ts=[];for(let i=0;i<n;i++){const bs=rows.map(()=>rows[Math.floor(R()*rows.length)]);ts.push(arvore(bs,6,R))}
+  return r=>ts.reduce((s,t)=>s+prever(t,r),0)/n}
+const mae=(a,b)=>a.reduce((s,v,i)=>s+Math.abs(v-b[i]),0)/a.length;
+const rmse=(a,b)=>Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0)/a.length);
+
+/* ---------- painel ---------- */
+let D=null;
+const pc=v=>(v*100).toFixed(0)+'%',f3=v=>v.toFixed(3).replace('.',',');
+const dia0=n=>{const d=new Date();d.setHours(0,0,0,0);return new Date(d.getTime()-n*864e5)};
+function montar(S,seed){
+  const rows=ocupacaoHoraria(S),corte=Math.floor(S.dias*.8),treino=rows.filter(r=>r.d<corte),teste=rows.filter(r=>r.d>=corte);
+  const R=rng(seed+1),lin=ridge(treino.map(feat),treino.map(r=>r.y)),rf=floresta(treino,R),y=teste.map(r=>r.y);
+  const M={lin:[mae(teste.map(lin),y),rmse(teste.map(lin),y)],rf:[mae(teste.map(rf),y),rmse(teste.map(rf),y)]};
+  D={S,rows,rf,M,seed};render()}
+async function lerCiclos(){
+  let todos=[],de=0;
+  while(true){const{data,error}=await sb.from('ciclos_sensor').select('maquina,inicio,fim,duracao_min,corrente_a').order('inicio').range(de,de+999);
+    if(error){say2('Erro ao ler os ciclos: '+error.message);return null}
+    todos=todos.concat(data);if(data.length<1000)break;de+=1000}
+  return todos}
+function say2(t){$('semente').textContent=t}
+function doBanco(l){
+  const ini0=new Date(l[0].inicio);ini0.setHours(0,0,0,0);
+  const dias=Math.max(7,Math.round((dia0(0)-ini0)/864e5));
+  const base=dia0(dias);
+  const ciclos=l.map(c=>{const i=new Date(c.inicio),f=new Date(c.fim);
+    const d=Math.floor((new Date(i).setHours(0,0,0,0)-base)/864e5);
+    const ini=(i-new Date(i).setHours(0,0,0,0))/6e4;
+    return{m:c.maquina,d,dow:i.getDay(),ini,fim:ini+(f-i)/6e4,dur:c.duracao_min,corrente:+c.corrente_a}}).filter(c=>c.d>=0&&c.d<dias);
+  return{ciclos,invalidos:'—',dias}}
+async function gerar(){
+  if(!ONLINE){const seed=Math.floor(Math.random()*1e6);montar(simular(seed),seed);return}
+  const l=await lerCiclos();if(!l)return;
+  if(!l.length){say2('O banco ainda não tem ciclos de sensor. Entre como administrador e clique em “Gerar e salvar dados simulados”.');return}
+  montar(doBanco(l),l.length);say2('Dados lidos do banco: '+l.length+' ciclos.')}
+async function gerarESalvar(){
+  const seed=Math.floor(Math.random()*1e6),S=simular(seed);
+  if(!ONLINE){montar(S,seed);return}
+  if(apt!=='admin'){say2('Só o administrador pode gravar dados simulados no banco.');return}
+  say2('Gravando no banco…');
+  const base=dia0(S.dias),lin=S.ciclos.map(c=>{const i=new Date(base.getTime()+c.d*864e5+c.ini*6e4),f=new Date(base.getTime()+c.d*864e5+c.fim*6e4);
+    return{maquina:c.m,inicio:i.toISOString(),fim:f.toISOString(),duracao_min:c.dur,corrente_a:c.corrente}});
+  let r=await sb.from('ciclos_sensor').delete().gte('id',0);
+  if(r.error){say2('Erro ao limpar: '+r.error.message);return}
+  for(let i=0;i<lin.length;i+=500){r=await sb.from('ciclos_sensor').insert(lin.slice(i,i+500));if(r.error){say2('Erro ao gravar: '+r.error.message);return}}
+  await gerar();say2('Gravados '+lin.length+' ciclos no banco.')}
+function render(){
+  const{S,rows,rf,M,seed}=D;
+  $('semente').textContent='Semente '+seed;
+  $('stats').innerHTML=[[S.ciclos.length.toLocaleString('pt-BR'),'ciclos válidos em '+S.dias+' dias'],[S.invalidos,'leituras inválidas descartadas'],[(S.ciclos.length/S.dias).toFixed(1).replace('.',','),'ciclos por dia'],[MAQ.length,'máquinas monitoradas']].map(([a,b])=>'<div class="stat"><b>'+a+'</b>'+b+'</div>').join('');
+  // mapa de calor
+  const med=Array.from({length:7},()=>Array(24).fill(0)),cnt=Array.from({length:7},()=>Array(24).fill(0));
+  rows.forEach(r=>{med[r.dow][r.h]+=r.y;cnt[r.dow][r.h]++});
+  let h='<tr><th></th>'+Array.from({length:24},(_,i)=>'<th>'+i+'h</th>').join('')+'</tr>';
+  for(let d=0;d<7;d++){h+='<tr><th>'+DIAS[d]+'</th>';
+    for(let i=0;i<24;i++){const v=med[d][i]/cnt[d][i],a=Math.min(1,v*1.6);
+      h+='<td style="background:rgba(var(--hi),'+a.toFixed(2)+');color:'+(a>.55?'#fff':'var(--tx)')+'" title="'+DIAS[d]+' '+i+'h: '+pc(v)+'">'+Math.round(v*100)+'</td>'}
+    h+='</tr>'}
+  $('hm').innerHTML=h;
+  // por máquina
+  const tot={};MAQ.forEach(m=>tot[m]=0);S.ciclos.forEach(c=>tot[c.m]+=c.dur);
+  $('maq').innerHTML=MAQ.map(m=>{const v=tot[m]/(S.dias*24*60);return'<div class="rowb"><span class="mono">'+m+'</span><div class="track" role="img" aria-label="'+m+' '+pc(v)+'"><div class="fill" style="width:'+Math.min(100,v*100*3)+'%"></div></div><b>'+pc(v)+'</b></div>'}).join('');
+  // próximos picos (7 dias à frente)
+  const amanha=new Date();amanha.setHours(0,0,0,0);amanha.setDate(amanha.getDate()+1);
+  const fut=[];for(let d=0;d<7;d++)for(let hr=8;hr<=21;hr++){const dt=new Date(amanha.getTime()+d*864e5);fut.push({dt,h:hr,dow:dt.getDay(),p:rf({h:hr,dow:dt.getDay()})})}
+  fut.sort((a,b)=>b.p-a.p);
+  $('picos').innerHTML=fut.slice(0,5).sort((a,b)=>a.dt-b.dt||a.h-b.h).map(f=>'<li><b>'+DIAS[f.dow]+' '+f.dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+', '+f.h+'h</b> — ocupação prevista de '+pc(f.p)+'</li>').join('');
+  $('modelo').textContent='Previsão da Random Forest para os próximos 7 dias, entre 8h e 21h.';
+  $('met').innerHTML='<tr><th style="text-align:left">Modelo</th><th>MAE</th><th>RMSE</th></tr>'+
+   '<tr><td style="text-align:left">Regressão linear (referência)</td><td>'+f3(M.lin[0])+'</td><td>'+f3(M.lin[1])+'</td></tr>'+
+   '<tr><td style="text-align:left"><b>Random Forest</b></td><td><b>'+f3(M.rf[0])+'</b></td><td><b>'+f3(M.rf[1])+'</b></td></tr>'}
+$('regen').onclick=gerarESalvar;
+</script>
+</body>
+</html>
