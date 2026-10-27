@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sugestões – Lavanderia coletiva</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f1ea;--sf:#fffdf8;--tx:#1d2a2e;--mu:#5d6b6f;--ac:#0b6e6e;--ln:#d8d2c4;--wa:#b4531a;--hi:11,110,110;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#121a1c;--sf:#1a2528;--tx:#e9efef;--mu:#9fb0b3;--ac:#4fc1c1;--ln:#2b3b3f;--wa:#f0955a;--hi:79,193,193}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+header,main{max-width:680px;margin:auto;padding:0 16px}
+header{padding-top:22px}
+h1{font:600 24px/1.2 "IBM Plex Mono",ui-monospace,monospace;margin:0 0 6px;letter-spacing:-.5px}
+h2{font:600 17px "IBM Plex Mono",ui-monospace,monospace;margin:0 0 10px}
+.sub{color:var(--mu);margin:0 0 16px}
+main{padding-bottom:40px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:16px;margin-bottom:14px}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{font-weight:600;padding:0;margin-bottom:8px}
+.opt{display:flex;gap:10px;align-items:center;border:1px solid var(--ln);border-radius:8px;padding:10px 12px;margin:6px 0;cursor:pointer;min-height:44px}
+.opt:hover{border-color:var(--ac)}
+.opt:has(input:checked){border-color:var(--ac);background:rgba(var(--hi),.10)}
+.opt input{accent-color:var(--ac);width:18px;height:18px;margin:0}
+.esc{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.esc .opt{flex-direction:column;gap:4px;justify-content:center;text-align:center;margin:0;padding:8px 4px}
+.ext{display:flex;justify-content:space-between;color:var(--mu);font-size:13px;margin-top:6px}
+textarea{width:100%;min-height:90px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:10px;resize:vertical}
+:focus-visible{outline:3px solid var(--wa);outline-offset:2px}
+button{font:inherit;cursor:pointer;border-radius:8px;padding:11px 18px;border:1px solid var(--ac);background:none;color:var(--ac);font-weight:600}
+button.p{background:var(--ac);color:var(--bg)}
+button:disabled{opacity:.6;cursor:wait}
+.msg{min-height:22px;color:var(--wa);font-weight:600;margin:4px 0 10px}
+.note{color:var(--mu);font-size:13px}
+.hp{position:absolute;left:-9999px;height:0;overflow:hidden}
+a{color:var(--ac)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Sua opinião sobre a lavanderia</h1>
+  <p class="sub">Testou o agendamento e o painel de horários de pico? Conte o que achou. Leva cerca de 2 minutos e é anônimo: não pedimos nome nem apartamento. Os campos com * são obrigatórios.</p>
+</header>
+<main>
+<form id="f" novalidate>
+  <div class="card"><fieldset><legend>Você é *</legend>
+    <label class="opt"><input type="radio" name="perfil" value="Morador"> Morador</label>
+    <label class="opt"><input type="radio" name="perfil" value="Síndico"> Síndico</label>
+  </fieldset></div>
+
+  <div class="card"><fieldset><legend>Conseguiu entrar e reservar um horário? *</legend>
+    <label class="opt"><input type="radio" name="reserva" value="Sim, sem ajuda"> Sim, sem ajuda</label>
+    <label class="opt"><input type="radio" name="reserva" value="Sim, com dificuldade"> Sim, com dificuldade</label>
+    <label class="opt"><input type="radio" name="reserva" value="Não consegui"> Não consegui</label>
+    <label class="opt"><input type="radio" name="reserva" value="Não testei"> Não testei o agendamento</label>
+  </fieldset></div>
+
+  <div class="card"><fieldset><legend>O painel de uso e horários de pico foi fácil de entender?</legend>
+    <div class="esc">
+      <label class="opt"><input type="radio" name="clareza" value="1">1</label>
+      <label class="opt"><input type="radio" name="clareza" value="2">2</label>
+      <label class="opt"><input type="radio" name="clareza" value="3">3</label>
+      <label class="opt"><input type="radio" name="clareza" value="4">4</label>
+      <label class="opt"><input type="radio" name="clareza" value="5">5</label>
+    </div>
+    <div class="ext"><span>1 = muito difícil</span><span>5 = muito fácil</span></div>
+  </fieldset></div>
+
+  <div class="card"><fieldset><legend>Saber os horários de pico seria útil para você? *</legend>
+    <label class="opt"><input type="radio" name="utilidade" value="Sim"> Sim</label>
+    <label class="opt"><input type="radio" name="utilidade" value="Talvez"> Talvez</label>
+    <label class="opt"><input type="radio" name="utilidade" value="Não"> Não</label>
+  </fieldset></div>
+
+  <div class="card">
+    <label for="sugestao"><b>O que você mudaria ou acrescentaria no sistema?</b></label>
+    <textarea id="sugestao" name="sugestao" maxlength="1000"></textarea>
+    <p class="note">Opcional, até 1.000 caracteres.</p>
+    <label for="dificuldade"><b>Teve dificuldade com cores, letras ou uso no celular?</b></label>
+    <textarea id="dificuldade" name="dificuldade" maxlength="500" style="min-height:70px"></textarea>
+    <p class="note" style="margin-bottom:0">Opcional, até 500 caracteres.</p>
+  </div>
+
+  <div class="hp" aria-hidden="true"><label>Não preencha este campo <input name="site" tabindex="-1" autocomplete="off"></label></div>
+  <div class="msg" id="msg" role="alert"></div>
+  <button class="p" id="env" type="submit">Enviar respostas</button>
+</form>
+
+<div class="card" id="ok" hidden role="status">
+  <h2>Respostas enviadas</h2>
+  <p>Obrigado por ajudar a melhorar a lavanderia do condomínio.</p>
+  <button id="outra" type="button">Responder de novo (outra pessoa)</button>
+</div>
+<p class="note">Este formulário faz parte de um projeto acadêmico (UNIVESP). As respostas são anônimas e usadas só no relatório do projeto.</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const CFG={url:'https://gwibdzaeiuvlxnnrbutl.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3aWJkemFlaXV2bHhubnJidXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNTk3MDIsImV4cCI6MjEwODYzNTcwMn0.tw-a_BzGxKq_212I1Hnx2jr4fsoQ1qrVCE2AuJgP6UE'};
+const sb=window.supabase.createClient(CFG.url,CFG.key);
+const $=id=>document.getElementById(id);
+const msg=t=>{$('msg').textContent=t};
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();msg('');
+  const fd=new FormData(e.target);
+  if(fd.get('site')){e.target.hidden=true;$('ok').hidden=false;return}   // robô: finge sucesso
+  const perfil=fd.get('perfil'),reserva=fd.get('reserva'),utilidade=fd.get('utilidade'),clareza=fd.get('clareza');
+  if(!perfil||!reserva||!utilidade){msg('Responda as perguntas marcadas com * antes de enviar.');return}
+  const lim=s=>{s=(s||'').trim();return s?s:null};
+  const linha={perfil,reserva,utilidade,clareza:clareza?+clareza:null,sugestao:lim(fd.get('sugestao')),dificuldade:lim(fd.get('dificuldade'))};
+  $('env').disabled=true;$('env').textContent='Enviando…';
+  const{error}=await sb.from('sugestoes').insert(linha);
+  $('env').disabled=false;$('env').textContent='Enviar respostas';
+  if(error){msg('Não foi possível enviar ('+error.message+'). Tente de novo em instantes.');return}
+  e.target.hidden=true;$('ok').hidden=false;$('ok').scrollIntoView({block:'center'})});
+$('outra').onclick=()=>{$('f').reset();$('f').hidden=false;$('ok').hidden=true;window.scrollTo(0,0)};
+</script>
+</body>
+</html>
