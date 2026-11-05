@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Administração – Lavanderia coletiva</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f1ea;--sf:#fffdf8;--tx:#1d2a2e;--mu:#5d6b6f;--ac:#0b6e6e;--ln:#d8d2c4;--wa:#b4531a;--ok:#1f7a3d;--hi:11,110,110;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#121a1c;--sf:#1a2528;--tx:#e9efef;--mu:#9fb0b3;--ac:#4fc1c1;--ln:#2b3b3f;--wa:#f0955a;--ok:#6fd08c;--hi:79,193,193}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+header,main{max-width:860px;margin:auto;padding:0 16px}
+header{padding-top:20px}
+main{padding-bottom:40px}
+h1{font:600 24px/1.15 "IBM Plex Mono",ui-monospace,monospace;margin:0 0 6px;letter-spacing:-.5px}
+h2{font:600 17px "IBM Plex Mono",ui-monospace,monospace;margin:0 0 10px}
+.sub{color:var(--mu);margin:0 0 14px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:16px;margin-bottom:16px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+input,button{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:6px;padding:8px 10px}
+button{cursor:pointer}button:hover{border-color:var(--ac)}
+button.p{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}
+button:disabled{opacity:.6;cursor:wait}
+:focus-visible{outline:3px solid var(--wa);outline-offset:2px}
+.msg{min-height:22px;font-weight:600}.msg.err{color:var(--wa)}.msg.ok{color:var(--ok)}
+.note{color:var(--mu);font-size:13px}
+.lk{color:var(--ac);font-weight:600}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{padding:8px 6px;text-align:left;font-size:14px;border-bottom:1px solid var(--ln);vertical-align:middle}
+th{color:var(--mu);font-weight:600}
+tr.ped td{background:rgba(var(--hi),.10)}
+td.acoes{white-space:nowrap}
+td.acoes button{padding:6px 10px;font-size:13px}
+.res{border:2px solid var(--ac);background:rgba(var(--hi),.08)}
+.senha{font:600 28px "IBM Plex Mono",ui-monospace,monospace;letter-spacing:2px;margin:6px 0;user-select:all;word-break:break-all}
+.tag{font:12px "IBM Plex Mono",ui-monospace,monospace;padding:2px 6px;border:1px solid var(--ln);border-radius:4px}
+.st-ok{color:var(--ok);font-weight:600}.st-wa{color:var(--wa);font-weight:600}.st-mu{color:var(--mu)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Administração</h1>
+  <p class="sub">Painel do síndico: situação de acesso dos 42 apartamentos e redefinição de senhas.</p>
+</header>
+<main>
+  <section class="card" id="loginCard" hidden>
+    <h2>Entrar como administrador</h2>
+    <form class="bar" id="loginForm">
+      <label for="pw">Senha do administrador</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <button class="p" type="submit">Entrar</button>
+    </form>
+    <div class="msg" id="msgLogin" role="status" aria-live="polite"></div>
+  </section>
+
+  <div id="painel" hidden>
+    <div class="bar"><span class="tag">admin</span><button id="sair">Sair</button><a class="lk" href="../index.html">Voltar ao agendamento</a></div>
+
+    <section class="card res" id="resCard" hidden aria-live="polite">
+      <h2 id="resTitulo"></h2>
+      <div class="senha" id="resSenha"></div>
+      <div class="bar"><button class="p" id="copiar">Copiar senha</button><button id="fechaRes">Fechar</button></div>
+      <p class="note">Entregue esta senha ao morador. Ela não será exibida novamente. No primeiro acesso ele será obrigado a criar uma nova senha, e os logins antigos dele foram encerrados.</p>
+    </section>
+
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+
+    <section class="card">
+      <h2>Moradores</h2>
+      <div class="bar"><label><input type="checkbox" id="soPend"> Mostrar só pedidos pendentes</label><span class="note" id="resumo"></span></div>
+      <div class="scroll"><table id="lista"></table></div>
+      <p class="note">Linhas destacadas têm pedido de “esqueci minha senha”. “Aguardando 1º acesso” significa que o morador ainda precisa trocar a senha temporária.</p>
+    </section>
+
+    <section class="card">
+      <h2>Últimos atendimentos</h2>
+      <div class="scroll"><table id="hist"></table></div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const CFG={url:'https://gwibdzaeiuvlxnnrbutl.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3aWJkemFlaXV2bHhubnJidXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNTk3MDIsImV4cCI6MjEwODYzNTcwMn0.tw-a_BzGxKq_212I1Hnx2jr4fsoQ1qrVCE2AuJgP6UE',admin:'admin@lavanderia.app'};
+const $=id=>document.getElementById(id);
+const sb=window.supabase.createClient(CFG.url,CFG.key);
+function say(t,cls){const m=$('msg');m.textContent=t;m.className='msg '+(cls||'')}
+let moradores=[];
+
+function gerarSenha(n=8){
+  const A='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789',lim=256-256%A.length;let s='';
+  while(s.length<n){const b=crypto.getRandomValues(new Uint8Array(16));for(const x of b){if(x<lim&&s.length<n)s+=A[x%A.length]}}
+  return s}
+const fmt=d=>new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+function cel(tr,txt,tag='td',cls){const c=document.createElement(tag);c.textContent=txt;if(cls)c.className=cls;tr.appendChild(c);return c}
+function cab(t,cols){t.replaceChildren();const tr=t.insertRow();cols.forEach(c=>cel(tr,c,'th'))}
+
+/* ---------- sessão ---------- */
+function mostra(logado){$('loginCard').hidden=logado;$('painel').hidden=!logado}
+async function checa(){
+  const{data}=await sb.auth.getSession();
+  const ok=data.session&&data.session.user.email===CFG.admin;
+  mostra(!!ok);
+  if(ok)carregar();
+  else if(data.session)$('msgLogin').textContent='Há um morador logado neste navegador. Entre como administrador abaixo.'}
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const{error}=await sb.auth.signInWithPassword({email:CFG.admin,password:$('pw').value});
+  if(error){$('msgLogin').className='msg err';$('msgLogin').textContent='Senha do administrador incorreta.';return}
+  $('pw').value='';$('msgLogin').textContent='';checa()});
+$('sair').onclick=async()=>{await sb.auth.signOut();$('resCard').hidden=true;$('resSenha').textContent='';mostra(false)};
+
+/* ---------- lista ---------- */
+async function carregar(){
+  const[a,b]=await Promise.all([
+    sb.rpc('admin_listar_moradores'),
+    sb.from('pedidos_senha').select('apartamento,status,criado_em,atendido_em').neq('status','pendente').order('atendido_em',{ascending:false}).limit(20)]);
+  if(a.error){say('Erro ao ler moradores: '+a.error.message+' (o banco.sql mais recente foi executado?)','err');return}
+  moradores=a.data;desenhaLista();
+  cab($('hist'),['Apto','Resultado','Pedido em','Atendido em']);
+  (b.data||[]).forEach(p=>{const tr=$('hist').insertRow();cel(tr,p.apartamento);cel(tr,p.status==='atendido'?'Senha redefinida':'Recusado');cel(tr,fmt(p.criado_em));cel(tr,p.atendido_em?fmt(p.atendido_em):'—')})}
+
+function desenhaLista(){
+  const so=$('soPend').checked,pend=moradores.filter(m=>m.pedido_id).length;
+  $('resumo').textContent=pend?pend+(pend===1?' pedido pendente':' pedidos pendentes'):'Nenhum pedido pendente.';
+  cab($('lista'),['Apto','Situação','Último acesso','Pedido','']);
+  moradores.filter(m=>!so||m.pedido_id).forEach(m=>{
+    const tr=$('lista').insertRow();if(m.pedido_id)tr.className='ped';
+    cel(tr,m.apto);
+    if(!m.existe)cel(tr,'Sem usuário','td','st-wa');
+    else if(m.trocar_senha)cel(tr,'Aguardando 1º acesso','td','st-wa');
+    else cel(tr,'Ativo','td','st-ok');
+    cel(tr,m.ultimo_acesso?fmt(m.ultimo_acesso):'—','td',m.ultimo_acesso?'':'st-mu');
+    cel(tr,m.pedido_id?('Pendente'+(m.contato?' · '+m.contato:'')+' · '+fmt(m.pedido_em)):'—','td',m.pedido_id?'':'st-mu');
+    const td=cel(tr,'','td','acoes');
+    if(m.existe){const b=document.createElement('button');b.className=m.pedido_id?'p':'';b.textContent='Redefinir senha';
+      b.setAttribute('aria-label','Redefinir senha do apartamento '+m.apto);b.onclick=()=>redefinir(m.apto,b);td.append(b)}
+    if(m.pedido_id){const r=document.createElement('button');r.textContent='Recusar';
+      r.setAttribute('aria-label','Recusar pedido do apartamento '+m.apto);r.onclick=()=>recusar(m.pedido_id);td.append(' ',r)}})}
+$('soPend').onchange=desenhaLista;
+
+async function redefinir(n,btn){
+  if(!confirm('Gerar uma nova senha temporária para o apartamento '+n+'? A senha atual deixará de funcionar.'))return;
+  btn.disabled=true;say('Redefinindo…');
+  const senha=gerarSenha();
+  const{error}=await sb.rpc('admin_redefinir_senha',{p_apartamento:n,p_senha:senha});
+  btn.disabled=false;
+  if(error){say('Não foi possível redefinir: '+error.message,'err');return}
+  say('');
+  $('resTitulo').textContent='Apartamento '+n+' – senha temporária';
+  $('resSenha').textContent=senha;$('resCard').hidden=false;$('resCard').scrollIntoView({block:'nearest'});
+  carregar()}
+async function recusar(id){
+  if(!confirm('Recusar este pedido?'))return;
+  const{error}=await sb.from('pedidos_senha').update({status:'recusado',atendido_em:new Date().toISOString()}).eq('id',id);
+  if(error){say('Erro ao recusar: '+error.message,'err');return}
+  say('Pedido recusado.','ok');carregar()}
+$('copiar').onclick=async()=>{try{await navigator.clipboard.writeText($('resSenha').textContent);say('Senha copiada.','ok')}catch(e){say('Não foi possível copiar; selecione a senha e copie manualmente.','err')}};
+$('fechaRes').onclick=()=>{$('resCard').hidden=true;$('resSenha').textContent=''};
+
+checa();
+</script>
+</body>
+</html>

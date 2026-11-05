@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Esqueci minha senha – Lavanderia coletiva</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f1ea;--sf:#fffdf8;--tx:#1d2a2e;--mu:#5d6b6f;--ac:#0b6e6e;--ln:#d8d2c4;--wa:#b4531a;--ok:#1f7a3d;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#121a1c;--sf:#1a2528;--tx:#e9efef;--mu:#9fb0b3;--ac:#4fc1c1;--ln:#2b3b3f;--wa:#f0955a;--ok:#6fd08c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+header,main{max-width:560px;margin:auto;padding:0 16px}
+header{padding-top:20px}
+h1{font:600 24px/1.15 "IBM Plex Mono",ui-monospace,monospace;margin:0 0 6px;letter-spacing:-.5px}
+.sub{color:var(--mu);margin:0 0 14px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:16px;margin-bottom:16px}
+label{display:block;font-weight:600;margin:12px 0 4px}
+label small{font-weight:400;color:var(--mu)}
+input,button{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:6px;padding:10px;width:100%}
+button{cursor:pointer;margin-top:16px}
+button.p{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}
+button:disabled{opacity:.6;cursor:wait}
+:focus-visible{outline:3px solid var(--wa);outline-offset:2px}
+.msg{margin-top:14px;font-weight:600;min-height:22px}
+.msg.err{color:var(--wa)}.msg.ok{color:var(--ok)}
+.note{color:var(--mu);font-size:13px}
+.lk{color:var(--ac);font-weight:600}
+ol{margin:0;padding-left:22px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Esqueci minha senha</h1>
+  <p class="sub">Peça ao síndico a redefinição da sua senha de acesso à lavanderia.</p>
+</header>
+<main>
+  <div class="card">
+    <form id="f" novalidate>
+      <label for="apt">Apartamento (1 a 42)</label>
+      <input id="apt" type="text" inputmode="numeric" autocomplete="username" required>
+      <label for="contato">Como o síndico pode te avisar? <small>(opcional: telefone ou WhatsApp)</small></label>
+      <input id="contato" type="text" maxlength="80" autocomplete="tel">
+      <button class="p" id="enviar" type="submit">Pedir nova senha</button>
+      <div class="msg" id="msg" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+  <div class="card">
+    <b>Como funciona</b>
+    <ol class="note">
+      <li>Você envia o pedido aqui.</li>
+      <li>O síndico gera uma senha temporária e entrega a você.</li>
+      <li>Entre com a senha temporária. O sistema pedirá que você crie uma nova senha.</li>
+    </ol>
+  </div>
+  <p class="note"><a class="lk" href="index.html">Voltar para o agendamento</a></p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const CFG={url:'https://gwibdzaeiuvlxnnrbutl.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3aWJkemFlaXV2bHhubnJidXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNTk3MDIsImV4cCI6MjEwODYzNTcwMn0.tw-a_BzGxKq_212I1Hnx2jr4fsoQ1qrVCE2AuJgP6UE'};
+const $=id=>document.getElementById(id);
+const sb=window.supabase.createClient(CFG.url,CFG.key);
+function say(t,cls){const m=$('msg');m.textContent=t;m.className='msg '+(cls||'')}
+
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const n=parseInt($('apt').value.trim(),10),contato=$('contato').value.trim();
+  if(!(n>=1&&n<=42)){say('Informe um apartamento de 1 a 42.','err');$('apt').focus();return}
+  $('enviar').disabled=true;say('Enviando…');
+  const{error}=await sb.from('pedidos_senha').insert({apartamento:n,contato:contato||null});
+  $('enviar').disabled=false;
+  if(error){
+    if(error.code==='23505'){say('Já existe um pedido pendente para o apartamento '+n+'. Aguarde o síndico ou procure-o diretamente.','err')}
+    else{say('Não foi possível enviar o pedido. Tente de novo ou procure o síndico.','err')}
+    return}
+  $('f').reset();
+  say('Pedido enviado para o apartamento '+n+'. Procure o síndico para receber sua senha temporária.','ok')});
+</script>
+</body>
+</html>
